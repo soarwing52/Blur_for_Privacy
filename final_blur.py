@@ -5,7 +5,6 @@ import os
 from imageai.Detection import ObjectDetection
 from PIL import Image, ImageDraw, ImageFilter
 import piexif
-import shutil
 
 class trans:
     def __init__(self,root):
@@ -28,7 +27,18 @@ class trans:
     def get_dir(self,var):
         self.dir_name = filedialog.askdirectory()
         var.set(self.dir_name)
-
+    def radius_calc(self,array):
+        x0 = array[0]
+        y0 = array[1]
+        x1 = array[2]
+        y1 = array[3]
+        x_dis = x1 - x0
+        y_dis = y1 - y0
+        #print ('calculate size: {},{}'.format(x_dis,y_dis))
+        if x_dis > 400 or y_dis > 400:
+            return 10
+        else:
+            return 7
     def image_blur(self,img,target_path, detector):
         #  image detection
         img_dir = os.path.dirname(img)
@@ -36,11 +46,8 @@ class trans:
         img_num = os.path.splitext(img_name)
         print(img)
 
-        try:
-            detections = detector.detectObjectsFromImage(input_image=img, output_image_path='./temp/d-{}'.format(img_name))
-        finally:
-            pass
-        
+        detections = detector.detectObjectsFromImage(input_image=img, output_image_path='./temp/d-{}'.format(img_name))
+
         #  open image
         imageObject = Image.open(img)
         image_draw = ImageDraw.Draw(imageObject)
@@ -53,7 +60,9 @@ class trans:
                 y0 = array[1]
                 # print (x0,y0)
                 cropped = imageObject.crop(array)
-                blur = cropped.filter(ImageFilter.GaussianBlur(radius=7))
+                radius = self.radius_calc(array)
+                #print (radius)
+                blur = cropped.filter(ImageFilter.GaussianBlur(radius=radius))
                 imageObject.paste(blur, array)
             else:
                 print(eachObject['name'] + ' is not vehicle')
@@ -71,7 +80,7 @@ class trans:
 
         detector = ObjectDetection()
         detector.setModelTypeAsRetinaNet()
-        detector.setModelPath(r"./resnet50_coco_best_v2.0.1.h5")
+        detector.setModelPath(r"C:\Users\Streckenkontrolle\Documents\liscensedetect/resnet50_coco_best_v2.0.1.h5")
         detector.loadModel()
 
         source = self.dir_name
@@ -100,39 +109,25 @@ class trans:
                     pass
 
             for file in files:
-                if 'jpg' in file.lower() or 'png' in file.lower():
-                    print (i)
-                    i+=1
-                    full_path = os.path.join(root, file)
-                    target_path = full_path.replace(source, target)
-                    if os.path.isfile(target_path) is False:
+                print (i)
+                i+=1
+                full_path = os.path.join(root, file)
+                target_path = full_path.replace(source, target)
+                if os.path.isfile(target_path) is False:
+                    if 'jpg' in file.lower() or 'png' in file.lower():
                         text.insert(END,target_path)
-                        try:
-                            self.image_blur(full_path, target_path,detector)
-                        except OSError:
-                            print ('image broken')
-                        except ValueError:
-                            print ('value')
-                        except IOError:
-                            print('IO')
-                            
-                    else:
-                        print('{} existed'.format(full_path))
-                        text.insert(END,'{} existed\n'.format(file))
+                        self.image_blur(full_path, target_path,detector)
                 else:
-                    print (file + ' is not a picture')
+                    print('{} existed'.format(full_path))
+                    text.insert(END,'{} existed\n'.format(file))
 
 
 def main():
-    if not os.path.isdir('temp'):
-        os.mkdir('temp')
     root = Tk()
     root.title('image blocker')
     root.geometry('470x305')
     trans(root)
     root.mainloop()
-    shutil.rmtree('temp')
-
 
 if __name__ == '__main__':
     main()
