@@ -7,3 +7,16 @@ ImageAI for object detection from OlafenwaMoses
 https://github.com/OlafenwaMoses/ImageAI
 
 and openalpr for plate recognition
+
+#Objective
+to censor people and car plates for privacy issues
+
+#The final result
+The openalpr is eventually not used for the limitations of recognition
+
+and also this script didn't need to read the plates, just need to make it unreadable.
+
+So the final method is to pick out the location of Person, Car, Truck and apply GaussianBlur 
+
+with closer/bigger objects I apply level 7 and further/smaller 11
+
