@@ -23,4 +23,4 @@ with closer/bigger objects I apply level 7 and further/smaller 11
 ## Usage
 simply select the directory containing the images, and it will create a _foldername_blocked next to it
 
-I didn't apply threading in this tool so the main GUI will freeze.
+The Label will show the file currently working and the textbox will show error files, which could be brocken image
