@@ -1,52 +1,54 @@
 # -*- coding: utf-8 -*-
-from  tkinter import *
+from tkinter import *
 from tkinter import filedialog
 import os
 from imageai.Detection import ObjectDetection
 from PIL import Image, ImageDraw, ImageFilter
 import piexif
+import shutil
+import threading
+
 
 class trans:
-    def __init__(self,root):
-        frame = Frame(root, bd= 5)
+    def __init__(self, root):
+        frame = Frame(root, bd=5)
         frame.pack()
         s_var = StringVar()
-        l = Label(frame, textvariable=s_var,bg='white', bd=5, width=40)
-        b = Button(frame, text='select folder',height= 2, command= lambda: self.get_dir(s_var))
+        l = Label(frame, textvariable=s_var, bg='white', bd=5, width=40)
+        b = Button(frame, text='select folder', height=2, command=lambda: self.get_dir(s_var))
         b.pack()
         l.pack()
-        frame_2 = Frame(root,height= 20,bd=5)
+
+        frame_2 = Frame(root, height=20, bd=5)
         frame_2.pack()
-        frame_b =Frame(root)
+        Fotorun = Button(frame_2, text='block image', command=self.open_thread).grid(row=1, column=1)
+
+
+        frame_b = Frame(root)
         frame_b.pack()
-        t = Text(frame_b,width= 40, height=10)
+        self.current = StringVar()
+        current_label = Label(frame_b,textvariable=self.current,bd=5,bg='white',width=80).pack()
+        t = Text(frame_b,bd=10)
         t.pack()
         self.t = t
-        Fotorun = Button(frame_2, text='block image', command=self.loop).grid(row=1, column=1)
 
-    def get_dir(self,var):
+
+    def get_dir(self, var):
         self.dir_name = filedialog.askdirectory()
         var.set(self.dir_name)
-    def radius_calc(self,array):
-        x0 = array[0]
-        y0 = array[1]
-        x1 = array[2]
-        y1 = array[3]
-        x_dis = x1 - x0
-        y_dis = y1 - y0
-        #print ('calculate size: {},{}'.format(x_dis,y_dis))
-        if x_dis > 400 or y_dis > 400:
-            return 10
-        else:
-            return 7
-    def image_blur(self,img,target_path, detector):
+
+    def image_blur(self, img, target_path, detector):
         #  image detection
         img_dir = os.path.dirname(img)
         img_name = os.path.basename(img)
         img_num = os.path.splitext(img_name)
         print(img)
 
-        detections = detector.detectObjectsFromImage(input_image=img, output_image_path='./temp/d-{}'.format(img_name))
+        try:
+            detections = detector.detectObjectsFromImage(input_image=img,
+                                                         output_image_path='./temp/d-{}'.format(img_name))
+        finally:
+            pass
 
         #  open image
         imageObject = Image.open(img)
@@ -60,9 +62,7 @@ class trans:
                 y0 = array[1]
                 # print (x0,y0)
                 cropped = imageObject.crop(array)
-                radius = self.radius_calc(array)
-                #print (radius)
-                blur = cropped.filter(ImageFilter.GaussianBlur(radius=radius))
+                blur = cropped.filter(ImageFilter.GaussianBlur(radius=7))
                 imageObject.paste(blur, array)
             else:
                 print(eachObject['name'] + ' is not vehicle')
@@ -80,7 +80,7 @@ class trans:
 
         detector = ObjectDetection()
         detector.setModelTypeAsRetinaNet()
-        detector.setModelPath(r"C:\Users\Streckenkontrolle\Documents\liscensedetect/resnet50_coco_best_v2.0.1.h5")
+        detector.setModelPath(r"./resnet50_coco_best_v2.0.1.h5")
         detector.loadModel()
 
         source = self.dir_name
@@ -91,7 +91,7 @@ class trans:
         try:
             os.mkdir(target)
             print('{} created'.format(target))
-            text.insert(END,'{} created \n'.format(target))
+            #text.insert(END, '{} created \n'.format(target))
         except FileExistsError:
             pass
         finally:
@@ -109,25 +109,50 @@ class trans:
                     pass
 
             for file in files:
-                print (i)
-                i+=1
-                full_path = os.path.join(root, file)
-                target_path = full_path.replace(source, target)
-                if os.path.isfile(target_path) is False:
-                    if 'jpg' in file.lower() or 'png' in file.lower():
-                        text.insert(END,target_path)
-                        self.image_blur(full_path, target_path,detector)
+                if 'jpg' in file.lower() or 'png' in file.lower():
+                    print (i)
+                    i += 1
+                    full_path = os.path.join(root, file)
+                    target_path = full_path.replace(source, target)
+                    if os.path.isfile(target_path) is False:
+                        self.current.set(target_path)
+                        #text.insert(END, target_path + '\n')
+                        try:
+                            self.image_blur(full_path, target_path, detector)
+                        except OSError:
+                            text.insert(END,target_path)
+                            print ('image broken')
+                        except ValueError:
+                            text.insert(END, target_path)
+                            print ('value')
+                        except IOError:
+                            text.insert(END, target_path)
+                            print('IO')
+
+                    else:
+                        print('{} existed'.format(full_path))
+                        self.current.set('{} existed \n'.format(file))
+                        #text.insert(END, '{} existed \n'.format(file))
                 else:
-                    print('{} existed'.format(full_path))
-                    text.insert(END,'{} existed\n'.format(file))
+                    print (file + ' is not a picture')
+
+    def open_thread(self):
+        T1 = threading.Thread(target=self.loop,name='T1')
+        T1.start()
+
 
 
 def main():
+    if not os.path.isdir('temp'):
+        os.mkdir('temp')
     root = Tk()
     root.title('image blocker')
     root.geometry('470x305')
     trans(root)
     root.mainloop()
+    shutil.rmtree('temp')
+    os._exit(0)
+
 
 if __name__ == '__main__':
     main()
