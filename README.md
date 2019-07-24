@@ -24,3 +24,6 @@ with closer/bigger objects I apply level 7 and further/smaller 11
 simply select the directory containing the images, and it will create a _foldername_blocked next to it
 
 The Label will show the file currently working and the textbox will show error files, which could be brocken image
+
+![images/0717_005-1172.jpg](https://github.com/soarwing52/Blur_for_Privacy/blob/master/image/0717_005-1172.jpg)
+![image2](https://github.com/soarwing52/Blur_for_Privacy/blob/master/image/0717_005-1217.jpg)
