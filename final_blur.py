@@ -26,9 +26,11 @@ class trans:
 
         frame_b = Frame(root)
         frame_b.pack()
+        Label(frame_b,text='current image',bd=5,width=80).pack()
         self.current = StringVar()
         current_label = Label(frame_b,textvariable=self.current,bd=5,bg='white',width=80).pack()
-        t = Text(frame_b,bd=10)
+        Label(frame_b, text='broken images', bd=5, width=80).pack()
+        t = Text(frame_b,bd=10,height=50    )
         t.pack()
         self.t = t
 
@@ -147,7 +149,7 @@ def main():
         os.mkdir('temp')
     root = Tk()
     root.title('image blocker')
-    root.geometry('470x305')
+    root.geometry('850x600')
     trans(root)
     root.mainloop()
     shutil.rmtree('temp')
